@@ -33,6 +33,11 @@ void verifyWord(
         std::map<Word, int>& results,
         const Coordinate& coord, Word word);
 
+// Writes the results to the appropriate files
+void writeResultsToOutputFiles(
+        const std::map<Word,int>& results,
+        const std::string& outFileWords,
+        const std::string& outFileCoords);
 
 int main(int argc, char** argv)
 {
@@ -91,28 +96,10 @@ int main(int argc, char** argv)
         std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
-
     std::cout << "All words found in " << duration << " seconds" << std::endl;
 
 
-    // Sort results by score
-    std::vector<std::pair<Word, int> > pairs;
-    for (auto itr = foundWords.begin(); itr != foundWords.end(); ++itr) {
-        pairs.push_back(*itr);
-    }
-
-    sort(pairs.begin(), pairs.end(), [=](const std::pair<Word, int>& a, const std::pair<Word, int>& b)
-            {
-            return a.second > b.second;
-            }
-        );
-
-    std::ofstream wordOutput(outFileWords);
-    std::ofstream coordOutput(outFileCoords);
-    for (auto it = pairs.begin(); it != pairs.end(); ++it) {
-        wordOutput << it->first.currentWord() << " " << it->second << std::endl;
-        coordOutput << it->first.generateScreenCoords() << std::endl;
-    }
+    writeResultsToOutputFiles(foundWords, outFileWords, outFileCoords);
 }
 
 void printUsage(const std::string& programName)
@@ -211,6 +198,31 @@ void verifyWord(Board& board, Dictionary& dict, std::map<Word, int>& results, co
             processNewWord(board, dict, results, coord, word);
         }
         word.removeLastLetter();
+    }
+}
+
+void writeResultsToOutputFiles(
+        const std::map<Word,int>& foundWords,
+        const std::string& outFileWords,
+        const std::string& outFileCoords)
+{
+    // Sort results by score
+    std::vector<std::pair<Word, int> > pairs;
+    for (auto itr = foundWords.begin(); itr != foundWords.end(); ++itr) {
+        pairs.push_back(*itr);
+    }
+
+    sort(pairs.begin(), pairs.end(), [=](const std::pair<Word, int>& a, const std::pair<Word, int>& b)
+            {
+            return a.second > b.second;
+            }
+        );
+
+    std::ofstream wordOutput(outFileWords);
+    std::ofstream coordOutput(outFileCoords);
+    for (auto it = pairs.begin(); it != pairs.end(); ++it) {
+        wordOutput << it->first.currentWord() << " " << it->second << std::endl;
+        coordOutput << it->first.generateScreenCoords() << std::endl;
     }
 }
 
