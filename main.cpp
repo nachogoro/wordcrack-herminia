@@ -1,11 +1,14 @@
 #include "Board.h"
 #include "Dictionary.h"
 
-#include <iostream>
-#include <fstream>
-#include <utility>
 #include <algorithm>
 #include <chrono>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <utility>
 
 // Prints the usage of the program
 void printUsage(const std::string& programName);
@@ -15,27 +18,33 @@ void validateConfig(
         const std::string&, const std::string&,
         const std::string&, const std::string&);
 
+// Method to be executed by a thread in charge of finding all the words
+// starting with the letters of row
+void findAllWordsThread(
+        Board board, const Dictionary& dict,
+        std::shared_ptr<std::map<Word, int>> results, int row);
+
 // Stores a new result in the map passed to it
-void resultFound(std::map<Word, int>& results, Word& word);
+void resultFound(std::shared_ptr<std::map<Word, int>> results, Word& word);
 
 // Given a new Word word and the Coordinate coord of the last letter added to
 // it, it recursively finds all the words which can be formed from it.
 void processNewWord(
-        Board& board, Dictionary& dict, 
-        std::map<Word, int>& results,
+        Board& board, const Dictionary& dict, 
+        std::shared_ptr<std::map<Word, int>> results,
         const Coordinate& coord, Word word);
 
 // Determines whether more words could potentially be formed from the current
 // Word word and a new letter in Coordinate coord. Helper method to
 // processNewWord(), in charge of recursion
 void verifyWord(
-        Board& board, Dictionary& dict,
-        std::map<Word, int>& results,
+        Board& board, const Dictionary& dict,
+        std::shared_ptr<std::map<Word, int>> results,
         const Coordinate& coord, Word word);
 
 // Writes the results to the appropriate files
 void writeResultsToOutputFiles(
-        const std::map<Word,int>& results,
+        std::shared_ptr<std::map<Word,int>> results,
         const std::string& outFileWords,
         const std::string& outFileCoords);
 
@@ -75,21 +84,22 @@ int main(int argc, char** argv)
 
     Dictionary dict(dictFileName);
     Board board(boardFileName);
-    std::map<Word, int> foundWords;
+    std::shared_ptr<std::map<Word, int>> foundWords(new std::map<Word,int>());
 
     std::chrono::high_resolution_clock::time_point start =
         std::chrono::high_resolution_clock::now();
 
+    // One thread per row
+    std::thread threads[VERTICAL_SIZE];
     for (int row = 0; row < VERTICAL_SIZE; ++row)
     {
-        for (int col = 0; col < HORIZONTAL_SIZE; ++col)
-        {
-            Coordinate coord(col, row);
-            Word word;
-            word.addLetter(board.letterAt(coord));
-            processNewWord(board, dict, foundWords, coord, word);
-            word.removeLastLetter();
-        }
+        threads[row] = std::thread(findAllWordsThread, board, dict, foundWords, row);
+    }
+
+    // Join the threads with the main one
+    for (int i = 0; i < VERTICAL_SIZE; ++i)
+    {
+        threads[i].join();
     }
 
     std::chrono::high_resolution_clock::time_point end =
@@ -144,22 +154,44 @@ void validateConfig(
 }
 
 
-void resultFound(std::map<Word, int>& results, Word& word)
+void findAllWordsThread(
+        Board board, const Dictionary& dict,
+        std::shared_ptr<std::map<Word, int> > results, int row)
 {
-    auto wordInMap = results.begin();
-    for (wordInMap = results.begin(); wordInMap != results.end(); ++wordInMap)
+    for (int col = 0; col < HORIZONTAL_SIZE; ++col)
+    {
+        Coordinate coord(col, row);
+        Word word;
+        word.addLetter(board.letterAt(coord));
+        processNewWord(board, dict, results, coord, word);
+        word.removeLastLetter();
+    }
+}
+
+void resultFound(std::shared_ptr<std::map<Word, int> > results, Word& word)
+{
+    static std::mutex mapMutex;
+
+    mapMutex.lock();
+    auto wordInMap = results->begin();
+    for (wordInMap = results->begin(); wordInMap != results->end(); ++wordInMap)
     {
         if (wordInMap->first.currentWord() == word.currentWord())
             break;
     }
 
-    if ((wordInMap == results.end()) || (wordInMap->second < word.score())) {
-        results[word] = word.score();
+    if ((wordInMap == results->end()) || (wordInMap->second < word.score())) {
+        if (wordInMap != results->end()) {
+            // Make sure we delete the entry so that the new one gets inserted
+            results->erase(wordInMap);
+        }
+        results->insert(std::make_pair(word, word.score()));
     }
+    mapMutex.unlock();
 }
 
 
-void processNewWord(Board& board, Dictionary& dict, std::map<Word, int>& results, const Coordinate& coord, Word word)
+void processNewWord(Board& board, const Dictionary& dict, std::shared_ptr<std::map<Word, int> > results, const Coordinate& coord, Word word)
 {
     Coordinate next = coord.left();
     verifyWord(board, dict, results, next, word);
@@ -186,7 +218,7 @@ void processNewWord(Board& board, Dictionary& dict, std::map<Word, int>& results
     verifyWord(board, dict, results, next, word);
 }
 
-void verifyWord(Board& board, Dictionary& dict, std::map<Word, int>& results, const Coordinate& coord, Word word)
+void verifyWord(Board& board, const Dictionary& dict, std::shared_ptr<std::map<Word, int> > results, const Coordinate& coord, Word word)
 {
     if (coord.isValid() && board.isAvailable(coord)) {
         word.addLetter(board.letterAt(coord));
@@ -202,13 +234,13 @@ void verifyWord(Board& board, Dictionary& dict, std::map<Word, int>& results, co
 }
 
 void writeResultsToOutputFiles(
-        const std::map<Word,int>& foundWords,
+        std::shared_ptr<std::map<Word,int> > foundWords,
         const std::string& outFileWords,
         const std::string& outFileCoords)
 {
     // Sort results by score
     std::vector<std::pair<Word, int> > pairs;
-    for (auto itr = foundWords.begin(); itr != foundWords.end(); ++itr) {
+    for (auto itr = foundWords->begin(); itr != foundWords->end(); ++itr) {
         pairs.push_back(*itr);
     }
 
