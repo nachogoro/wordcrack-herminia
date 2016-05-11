@@ -82,7 +82,14 @@ int main(int argc, char** argv)
     // Validate the configuration parameters
     validateConfig(dictFileName, boardFileName, outFileWords, outFileCoords);
 
+    std::chrono::high_resolution_clock::time_point dictStart =
+        std::chrono::high_resolution_clock::now();
     Dictionary dict(dictFileName);
+    std::chrono::high_resolution_clock::time_point dictEnd =
+        std::chrono::high_resolution_clock::now();
+    auto dictDuration = std::chrono::duration_cast<std::chrono::seconds>(dictEnd - dictStart).count();
+    std::cout << "Dictionary loaded in " << dictDuration << " seconds" << std::endl;
+
     Board board(boardFileName);
     std::shared_ptr<std::map<Word, int>> foundWords(new std::map<Word,int>());
 
