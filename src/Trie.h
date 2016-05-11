@@ -2,7 +2,7 @@
 #define __TRIE_H__
 
 #include <string>
-#include <set>
+#include <vector>
 #include <memory>
 
 class TrieNode
@@ -10,12 +10,9 @@ class TrieNode
     public:
         const std::string word;
         bool isValidWord;
-        std::set<std::shared_ptr<TrieNode> > childrenWords;
+        std::vector<std::unique_ptr<TrieNode> > childrenWords;
 
-        TrieNode(const std::string& val, bool isWord)
-            : word(val),
-              isValidWord(isWord)
-        { }
+        TrieNode(const std::string& val, bool isWord);
 };
 
 class Trie {
@@ -27,13 +24,10 @@ class Trie {
 
     private:
         void recursiveInsertion(TrieNode* parent, const std::string& word);
-        TrieNode* findNode(TrieNode* parent, const std::string& word) const;
+        TrieNode* recursiveFindNode(TrieNode* parent, const std::string& word) const;
 
     private:
-        // The dictionary will be shared by several threads, each taking a copy
-        // of it. In order for the object to be copyable, we cannot have
-        // unique_ptr
-        std::shared_ptr<TrieNode> mRootNode;
+        std::unique_ptr<TrieNode> mRootNode;
 };
 
 #endif
