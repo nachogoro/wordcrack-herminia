@@ -33,9 +33,24 @@ src/ScreenDimensions.h
 The main script then takes the output coordinates and uses it to automatically
 play the game for us, playing the most valuable words first.
 
+## Requirements
+
+* monkeyrunner
+* tesseract-ocr
+* Different Python packages specified in requirements.txt
+
+Using virtualenv is not required but strongly suggested.
+
 ## Building Herminia
 
-The python scripts need no building, so just run "make" for the C++ tool
+To install the dependencies:
+
+1. Install monkeyrunner as part of Android's SDK and add it to PATH.
+2. `sudo apt-get install tesseract-ocr`
+3. `virtualenv --no-site-packages --distribute venv && source venv/bin/activate
+   && pip install -r requirements.txt`
+
+To build the C++ tools simply run `make`
 
 ## Using Herminia
 
@@ -43,26 +58,26 @@ There two uses for Herminia.
 
 The first one is to simply find the words, using the
 C++ solver. In that case, run:
-    ./herminia--dict <dictionary> --board <board> --outwords <words> --outcoords <coords>
+
+`./herminia--dict <dictionary> --board <board> --outwords <words> --outcoords <coords>`
 
 The second one is to have Herminia also play for you. In that case, change the
-values inside herminia_config.py for your setup (this includes screen-related 
-values, so make sure you change them if using something different than a MotoG),
-make sure that the C++ tool is adapted to your device's screen by setting the 
-values inside src/ScreenDimensions.h, rebuild Herminia and run:
-    python run_herminia.py
+values inside `python_tools/herminia_config.py` for your setup (this includes
+screen-related values, so make sure you change them if using something
+different than a MotoG), make sure that the C++ tool is adapted to your
+device's screen by setting the values inside `src/ScreenDimensions.h`, rebuild
+Herminia and run:
 
-It is necessary to have mokeyrunner in the PATH, as well as having several 
-Python modules installed.
+`python run_herminia.py`
 
 
 ## About MonkeyRunner and Jython
 
 monkeyrunner runs on Jython, which is based on Python 2.5. That means that 
 getting a regular Python script to work with it can be tedious (having to install
-modules for 2.5, importing stuff from __future__, etc.). Therefore, for this 
-project I decided to do something very hacky: run all the code in Python, and
-create scripts for the monkeyrunner parts which are run as a subprocess.
+modules for 2.5, importing stuff from \_\_future\_\_, etc.). Therefore, for
+this project I decided to do something very hacky: run all the code in Python,
+and create scripts for the monkeyrunner parts which are run as a subprocess.
 
 This way, code which doesn't need monkeyrunner can use all the new Python 
 features and there is no need to install modules for Python 2.5.
