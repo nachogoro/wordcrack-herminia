@@ -20,16 +20,16 @@ void validateConfig(
 // starting with the letters of row
 void findAllWords(
         Board board, const Dictionary& dict,
-        std::map<Word, int> results);
+        std::map<Word, int>& results);
 
 // Stores a new result in the map passed to it
-void resultFound(std::map<Word, int> results, Word& word);
+void resultFound(std::map<Word, int>& results, Word& word);
 
 // Given a new Word word and the Coordinate coord of the last letter added to
 // it, it recursively finds all the words which can be formed from it.
 void processNewWord(
         Board& board, const Dictionary& dict, 
-        std::map<Word, int> results,
+        std::map<Word, int>& results,
         const Coordinate& coord, Word word);
 
 // Determines whether more words could potentially be formed from the current
@@ -37,12 +37,12 @@ void processNewWord(
 // processNewWord(), in charge of recursion
 void verifyWord(
         Board& board, const Dictionary& dict,
-        std::map<Word, int> results,
+        std::map<Word, int>& results,
         const Coordinate& coord, Word word);
 
 // Writes the results to the appropriate files
 void writeResultsToOutputFiles(
-        std::map<Word,int> results,
+        std::map<Word,int>& results,
         const std::string& outFileWords,
         const std::string& outFileCoords);
 
@@ -153,7 +153,7 @@ void validateConfig(
 
 void findAllWords(
         Board board, const Dictionary& dict,
-        std::map<Word, int> results)
+        std::map<Word, int>& results)
 {
     for (int row = 0; row < VERTICAL_SIZE; ++row)
     {
@@ -168,7 +168,7 @@ void findAllWords(
     }
 }
 
-void resultFound(std::map<Word, int> results, Word& word)
+void resultFound(std::map<Word, int>& results, Word& word)
 {
     auto wordInMap = results.begin();
     for (wordInMap = results.begin(); wordInMap != results.end(); ++wordInMap)
@@ -187,7 +187,7 @@ void resultFound(std::map<Word, int> results, Word& word)
 }
 
 
-void processNewWord(Board& board, const Dictionary& dict, std::map<Word, int> results, const Coordinate& coord, Word word)
+void processNewWord(Board& board, const Dictionary& dict, std::map<Word, int>& results, const Coordinate& coord, Word word)
 {
     Coordinate next = coord.left();
     verifyWord(board, dict, results, next, word);
@@ -214,7 +214,7 @@ void processNewWord(Board& board, const Dictionary& dict, std::map<Word, int> re
     verifyWord(board, dict, results, next, word);
 }
 
-void verifyWord(Board& board, const Dictionary& dict, std::map<Word, int> results, const Coordinate& coord, Word word)
+void verifyWord(Board& board, const Dictionary& dict, std::map<Word, int>& results, const Coordinate& coord, Word word)
 {
     if (coord.isValid() && board.isAvailable(coord)) {
         word.addLetter(board.letterAt(coord));
@@ -230,7 +230,7 @@ void verifyWord(Board& board, const Dictionary& dict, std::map<Word, int> result
 }
 
 void writeResultsToOutputFiles(
-        std::map<Word,int> foundWords,
+        std::map<Word,int>& foundWords,
         const std::string& outFileWords,
         const std::string& outFileCoords)
 {
