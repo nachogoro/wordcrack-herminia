@@ -3,7 +3,6 @@ numpy==1.12.0
 olefile==0.44
 packaging==16.8
 Pillow==4.0.0
-pkg-resources==0.0.0
 pyparsing==2.1.10
 pytesseract==0.1.6
 scipy==0.18.1
