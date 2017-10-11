@@ -19,7 +19,7 @@ Herminia's C++ solver takes a text file representing the board to solve. This
 file must be formatted like:
 * Four lines, each line composed of four tokens separated by a blank space.
 * Each token represents a tile in the board.
-* A tile is represented as <letter><value><multiplier_if_any>
+* A tile is represented as `<letter><value><multiplier_if_any>`
 
 See `exampleboard.png` and `exampleboard.txt` for an example.
 
@@ -74,7 +74,7 @@ Herminia and run:
 
 `monkeyrunner` runs on Jython, which is based on Python 2.5. That means that 
 getting a regular Python script to work with it can be tedious (having to install
-modules for 2.5, importing stuff from \_\_future\_\_, etc.). Therefore, for
+modules for 2.5, importing stuff from `__future__`, etc.). Therefore, for
 this project I decided to do something very hacky: run all the code in Python,
 and create scripts for the monkeyrunner parts which are run as a subprocess.
 
